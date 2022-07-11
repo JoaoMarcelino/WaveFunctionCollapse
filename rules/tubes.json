@@ -1,0 +1,7 @@
+{
+    "black.png": [0, 0, 0, 0],
+    "simple.png": [0, 1, 0, 1],
+    "split.png": [1, 1, 0, 1],
+    "turn.png": [1, 0, 0, 1],
+    "overpass.png": [1, 1, 1, 1]
+}
