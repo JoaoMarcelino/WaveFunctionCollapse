@@ -1,8 +1,10 @@
+from re import T
 from PIL import Image
-from square import Square
+from classes import Square, Grid
 from os import listdir
 from random import randint
 import json
+
 def image_grid(squares, size):
     assert len(squares) == size**2
 
@@ -14,23 +16,69 @@ def image_grid(squares, size):
         grid.paste(square.image, box=(i%size*w, i//size*h))
     return grid
 
+def update_grid(full_grid, obj, size):
+
+    width = obj.width
+    height = obj.height
+
+    index = height * size + width
+
+    if width > 0:
+        left = full_grid[index - 1]
+        left.options = update_options(left, 1, obj.square.rules[3])
+
+    if width < size - 1:
+        right = full_grid[index + 1]
+        right.options = update_options(right, 3, obj.square.rules[1])
+
+    if height > 0:
+        up = full_grid[(height - 1) * size + width]
+        up.options = update_options(up, 2, obj.square.rules[0])
+
+    if height < size - 1:
+        down = full_grid[(height + 1) * size + width]
+        down.options = update_options(down, 0, obj.square.rules[2])
+
+
+def update_options(grid, side, value):
+    new_options = []
+    for option in grid.options:
+        if option.rules[side] == value:
+            new_options.append(option)
+
+    return new_options
+
 def algorithm(squares, size):
 
-    fill_grid = [[0] * size for a in range(size)]
-    
+    object_grid = [Grid(squares, i%size, i//size) for i in range(size**2)]
     w, h = squares[0].image.size
     grid = Image.new('RGB', size=(size*w, size*h))
 
-    index = randint(0, len(squares)-1)
 
-    square = squares[index]
+    for i in range(size ** 2):
+        grid_sorted = sorted(object_grid, key=lambda x: len(x.options))
+        for obj in grid_sorted:
+            if obj.collapsed == False:
+                choice = randint(0, len(obj.options)-1)
+                square = obj.options[choice]
+                
+                obj.square = square
+                obj.collapsed = True
+                obj.options = []
 
-    grid.paste(square.image, box=(0, 0))
+                update_grid(object_grid, obj, size)
 
+                break
+
+        
+        #grid.show()
+
+    #Update options of neighbors
+    for i, obj in enumerate(object_grid):
+        grid.paste(obj.square.image, box=(obj.width*w, obj.height*h))
+
+    grid.show(title = "map")
     
-
-
-
 def get_rules(file):
 
     f = open(file)
@@ -67,6 +115,7 @@ def create_squares(images_folder, rules_file):
 
     return squares
 
+
 if __name__ == '__main__':
 
     size = 40
@@ -76,6 +125,10 @@ if __name__ == '__main__':
 
     squares = create_squares(images_folder, rules_file)
 
-    grid = image_grid(squares, size)
-    grid.show()
+
+    while True:
+        algorithm(squares, size)
+        x = input()
+    #grid = image_grid(squares, size)
+    #grid.show()
     
